@@ -16,7 +16,7 @@ const providers: Record<string, () => Provider> = {
       "groq",
       "https://api.groq.com/openai/v1/",
       process.env.Groq_API_Key!,
-      "qwen/qwen3.827b",
+      "openai/gpt-oss-20b",
     ),
 };
 

@@ -3,17 +3,40 @@ export type Usage = {
   output: number;
 };
 
+export type PendingToolCall = {
+  id: string;
+  name: string;
+  arguments: string;
+};
+
 export type StopReason = "stop" | "length" | "toolUse";
+
+export type ContentBlock =
+  | { type: "text"; text: string }
+  | {
+      type: "toolCall";
+      id: string;
+      name: string;
+      arguments: Record<string, unknown>;
+    };
 
 export type UserMessage = { role: "user"; content: string };
 export type AssistentMessage = {
   role: "assistent";
-  content: string;
+  content: ContentBlock[];
   usage: Usage;
   StopReason: StopReason;
 };
 
-export type Message = UserMessage | AssistentMessage;
+export type ToolResultMessage = {
+  role: "toolResult";
+  toolCallId: string;
+  toolName: string;
+  content: string;
+  isError: boolean;
+};
+
+export type Message = UserMessage | AssistentMessage | ToolResultMessage;
 
 export type StreamEvent =
   | { type: "text_delta"; delta: string }
@@ -23,7 +46,7 @@ export type StreamOptions = {
   message: Message[];
   model: string;
   system?: string;
-  tool?:ToolSpec[];
+  tools?: ToolSpec[];
 };
 
 export interface Provider {
@@ -32,19 +55,12 @@ export interface Provider {
   stream(opts: StreamOptions): AsyncIterable<StreamEvent>;
 }
 
-export type toolResultMessage = {
-  role: "toolResult";
-  toolCallId: string;
-  toolName: String;
-  content: string;
-  isError: boolean;
-};
-
 export type ToolSpec = {
   name: string;
   description: string;
   parameters: Record<string, unknown>;
 };
+
 export type Tool = ToolSpec & {
   execute(args: Record<string, unknown>): Promise<string>;
 };

@@ -3,7 +3,7 @@ export type Usage = {
     output:number
 }
 
-export type StopReason = "stop"|"lengt"|"toolUse"
+export type StopReason = "stop"|"length"|"toolUse"
 
 export type UserMessage= {role:"user"; content:string}
 export type AssistentMessage= {role:"assistent"; content:string; usage:Usage; StopReason:StopReason}

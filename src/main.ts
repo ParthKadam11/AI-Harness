@@ -24,4 +24,4 @@ const message = await groq.chat.completions.create({
     model:values.model,
 })
 
-console.log(message.choices[0]?.message?.content ?? "");
+console.log(JSON.stringify(message, null, 2));

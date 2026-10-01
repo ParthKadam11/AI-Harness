@@ -1,27 +1,36 @@
 import { config } from "dotenv";
-import Groq from "groq-sdk";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
+import { getProvider } from "./providers/index.ts";
+import type { Message } from "./types.ts";
 
-// load the .env next to the code, so mypi works from any folder
 config({ path: fileURLToPath(new URL("../.env", import.meta.url)), quiet: true });
 
-const {values}= parseArgs({
-    options:{
-        prompt:{type:"string", short:"t"},
-        model:{type:"string", default:"openai/gpt-oss-20b"}
-    }
-})
+const { values } = parseArgs({
+  options: {
+    prompt: { type: "string", short: "t" },
+    provider: { type: "string", default: "groq" },
+    model: { type: "string" },
+  },
+});
 
-if(!values.prompt){
-    console.error("No prompt!!")
-    process.exit(1);
-}   
+if (!values.prompt) {
+  console.error(
+    "No prompt!! Use Command => cc -t <prompt> --provider (anthropic OR groq)",
+  );
+  process.exit(1);
+}
 
-const groq = new Groq({ apiKey: process.env.Groq_API_Key });
-const message = await groq.chat.completions.create({
-    messages:[{role:"user", content:values.prompt}],
-    model:values.model,
-})
+const provider = getProvider(values.provider);
+const model = values.model ?? provider.defaultModel;
+const messages: Message[] = [{ role: "user", content: values.prompt }];
 
-console.log(JSON.stringify(message, null, 2));
+for await (const event of provider.stream({ message: messages, model })) {
+  if (event.type === "text_delta") process.stdout.write(event.delta);
+  else {
+    const { usage, StopReason } = event.message;
+    console.log(
+      `\n\n ${provider.name} ... ${model} ... ${usage.input} ...${usage.output} ... ${StopReason}`,
+    );
+  }
+}

@@ -1,5 +1,7 @@
 import type { Tool } from "../types.ts";
-import { bashTool } from "./bash.ts";
-import { readTool } from "./read.ts";
+import { reloadTools, tools } from "./registry.ts";
 
-export const tools: Tool[] = [readTool, bashTool];
+await reloadTools();
+
+export { tools, reloadTools };
+export type { Tool };

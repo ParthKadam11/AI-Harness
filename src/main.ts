@@ -30,12 +30,15 @@ const provider = getProvider(values.provider);
 const model = values.model ?? provider.defaultModel;
 const messages: Message[] = [{ role: "user", content: values.prompt }];
 
-const system = `You are a coding agent in a local project (cwd is the repo root).
-Available tools: read (file contents), bash (shell: ls/find/grep/etc).
-Rules:
-- Use bash to list directories and search; use read for known files.
-- Paths are relative to the project root (e.g. src/main.ts), never invent tools like list_dir.
-- Prefer short exploration commands before reading many files.`;
+const system = `You are a capable coding agent in this repo (cwd = project root).
+
+Tools:
+- read — inspect a known file
+- bash — your main workbench: shell commands, write files (write_path+contents), edit files (write_path+old_string+new_string), run checks
+
+Work like a developer: explore → read → edit/write → verify (tsc/tests/git). Prefer surgical edits over rewriting whole files when changing existing code. Never invent tools; use bash/ls to explore.
+
+If the user asks you to build a new agent tool, implement it as normal code under src/tools/ (export a Tool with name/description/parameters/execute), then call bash with reload_tools=true so it joins this session's tool list.`;
 
 await runAgent({
   provider,
@@ -43,18 +46,17 @@ await runAgent({
   system,
   tools,
   messages,
+  maxTurns: 40,
   onEvent(event) {
     if (event.type === "text") process.stdout.write(event.delta);
     else if (event.type === "tool_start") {
-      const args =
-        "arguments" in event.call
-          ? JSON.stringify(event.call.arguments)
-          : "";
-      console.log(`\n→ ${event.call.name} ${args}`);
+      const args = JSON.stringify(event.call.arguments);
+      const shown = args.length > 300 ? args.slice(0, 300) + "…" : args;
+      console.log(`\n→ ${event.call.name} ${shown}`);
     } else if (event.type === "tool_end") {
-      const preview = event.result.slice(0, 500);
+      const preview = event.result.slice(0, 800);
       const more =
-        event.result.length > 500
+        event.result.length > 800
           ? `\n… (${event.result.length} chars total)`
           : "";
       console.log(

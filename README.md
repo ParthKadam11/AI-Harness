@@ -28,6 +28,10 @@ The todo app itself is a classic single‑page application using plain HTML, CSS
 
 ## Getting Started
 
+## Demo
+
+<video controls src="ai harness demo.mp4" style="max-width: 100%;"></video>
+
 ```bash
 # Install dependencies
 pnpm install

@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import type {PendingToolCall,ContentBlock, Provider, StopReason, Usage } from "../types.ts";
+import type {ToolCallBlock,ContentBlock, Provider, StopReason, Usage } from "../types.ts";
 
 function textFromBlocks(blocks: ContentBlock[]): string {
   return blocks
@@ -28,8 +28,6 @@ function toolCallsFromBlocks(
     );
   return calls.length > 0 ? calls : undefined;
 }
-
-
 
 export function createOpenAiCompat(
   name: string,
@@ -92,7 +90,7 @@ export function createOpenAiCompat(
       let text = "";
       let usage: Usage = { input: 0, output: 0 };
       let stopReason: StopReason = "stop";
-      const pending = new Map<number, PendingToolCall>();
+      const pending = new Map<number, ToolCallBlock>();
 
       for await (const chunk of stream) {
         const choice = chunk.choices[0];

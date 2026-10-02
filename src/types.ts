@@ -3,7 +3,7 @@ export type Usage = {
   output: number;
 };
 
-export type PendingToolCall = {
+export type ToolCallBlock = {
   id: string;
   name: string;
   arguments: string;

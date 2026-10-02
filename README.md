@@ -1,8 +1,9 @@
-#Ai Harness
-<video controls src="ai harness demo.mp4" style="max-width: 100%;"></video> 
-This repository contains a small TypeScript project that demonstrates how to build a simple **todo** web application using the **Groq** provider. The todo application was built with the help of Groq. The application is driven by a small agent that can read, write, and execute shell commands. It uses the Groq SDK to generate code, comments, or instructions on how to improve the application. 
+This repository contains a small TypeScript project that demonstrates how to build a simple **todo** web application using the **Groq** provider. The todo application was built with the help of Groq. The application is driven by a small agent that can read, write, and execute shell commands. It uses the Groq SDK to generate code, comments, or instructions on how to improve the application.
+
+![Demo](demo.mp4)
 
 ## Table of Contents
+
 - [What Is This?](#what-is-this)
 - [Features](#features)
 - [Getting Started](#getting-started)
@@ -10,6 +11,8 @@ This repository contains a small TypeScript project that demonstrates how to bui
 - [How It Works](#how-it-works)
 - [Contributing](#contributing)
 - [License](#license)
+
+
 
 ## What Is This?
 
@@ -25,6 +28,8 @@ The todo app itself is a classic single‑page application using plain HTML, CSS
 - **Tool‑based architecture**: The agent exposes a small set of tools (`read`, `bash`, etc.) that it can call.
 - **TypeScript**: All code is written in TypeScript.
 - **Zero‑config**: Uses `tsx` to run TypeScript without compiling.
+
+
 
 ## Getting Started
 
@@ -52,6 +57,8 @@ Open [http://localhost:8080](http://localhost:8080) to see the todo app.
 - `pnpm run dev -- -t <prompt> [--provider <provider>] [--model <model>]` – Start the agent with a prompt.
   - `--provider`: `anthropic` or `groq` (default `groq`).
   - `--model`: Specify a model name; if omitted, the provider’s default model is used.
+
+
 
 ## How It Works
 

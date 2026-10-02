@@ -30,21 +30,40 @@ const provider = getProvider(values.provider);
 const model = values.model ?? provider.defaultModel;
 const messages: Message[] = [{ role: "user", content: values.prompt }];
 
+const system = `You are a coding agent in a local project (cwd is the repo root).
+Available tools: read (file contents), bash (shell: ls/find/grep/etc).
+Rules:
+- Use bash to list directories and search; use read for known files.
+- Paths are relative to the project root (e.g. src/main.ts), never invent tools like list_dir.
+- Prefer short exploration commands before reading many files.`;
+
 await runAgent({
   provider,
   model,
+  system,
   tools,
   messages,
   onEvent(event) {
     if (event.type === "text") process.stdout.write(event.delta);
-    else if (event.type === "tool_start") console.log(`\n ${event.call.name}`);
-    else if (event.type === "tool_end") {
-      const lines = event.result.split("\n").length;
-      console.log(`\n ${event.isError ? event.result : lines}`);
+    else if (event.type === "tool_start") {
+      const args =
+        "arguments" in event.call
+          ? JSON.stringify(event.call.arguments)
+          : "";
+      console.log(`\n→ ${event.call.name} ${args}`);
+    } else if (event.type === "tool_end") {
+      const preview = event.result.slice(0, 500);
+      const more =
+        event.result.length > 500
+          ? `\n… (${event.result.length} chars total)`
+          : "";
+      console.log(
+        event.isError ? `\n✗ ${preview}${more}` : `\n✓ ${preview}${more}`,
+      );
     } else if (event.type === "turn_end") {
       const { usage, StopReason } = event.message;
       console.log(
-        `\n\n ${provider.name} ... ${model} ... ${usage.input} ...${usage.output} ... ${StopReason}`,
+        `\n\n Provider:${provider.name}   Model:${model}   Input Usage:${usage.input}   Output Usage:${usage.output}   Stopping Reason:${StopReason}`,
       );
     }
   },

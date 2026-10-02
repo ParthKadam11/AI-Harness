@@ -15,14 +15,16 @@ function findBash(): string {
   throw new Error("bash not found (install Git Bash or add bash to PATH)");
 }
 
-function runBash(command: string, timeoutMs: number): Promise<string> {
+type BashResult = { output: string; code: number | null; timedOut: boolean };
+
+function runBash(command: string, timeoutMs: number): Promise<BashResult> {
   return new Promise((resolve) => {
     let settled = false;
-    const finish = (text: string) => {
+    const finish = (result: BashResult) => {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
-      resolve(text);
+      resolve(result);
     };
 
     let child;
@@ -30,15 +32,20 @@ function runBash(command: string, timeoutMs: number): Promise<string> {
       child = spawn(findBash(), ["-c", command], {
         cwd: process.cwd(),
         windowsHide: true,
+        env: process.env,
       });
     } catch (e) {
-      resolve(`failed to start bash: ${e instanceof Error ? e.message : String(e)}`);
+      finish({
+        output: `failed to start bash: ${e instanceof Error ? e.message : String(e)}`,
+        code: 1,
+        timedOut: false,
+      });
       return;
     }
 
     let out = "";
-    child.stdout.on("data", (d) => (out += d));
-    child.stderr.on("data", (d) => (out += d));
+    child.stdout.on("data", (d) => (out += d.toString("utf8")));
+    child.stderr.on("data", (d) => (out += d.toString("utf8")));
 
     const timer = setTimeout(() => {
       if (process.platform === "win32" && child.pid) {
@@ -48,15 +55,23 @@ function runBash(command: string, timeoutMs: number): Promise<string> {
       } else {
         child.kill("SIGKILL");
       }
-      finish(`${out}\n[timed out after ${timeoutMs / 1000}s]`);
+      finish({
+        output: `${out}\n[timed out after ${timeoutMs / 1000}s]`,
+        code: 124,
+        timedOut: true,
+      });
     }, timeoutMs);
 
     child.on("error", (e) => {
-      finish(`failed to start bash: ${e.message}`);
+      finish({
+        output: `failed to start bash: ${e.message}`,
+        code: 1,
+        timedOut: false,
+      });
     });
 
     child.on("close", (code) => {
-      finish(`${out}\n[exit code: ${code ?? "null"}]`);
+      finish({ output: out.trimEnd(), code, timedOut: false });
     });
   });
 }
@@ -64,13 +79,14 @@ function runBash(command: string, timeoutMs: number): Promise<string> {
 export const bashTool: Tool = {
   name: "bash",
   description:
-    "Run a bash command in the project directory and return stdout/stderr. Use for listing files, searching, or other shell tasks.",
+    "Run a POSIX bash command in the project root (cwd). Use this to explore the filesystem (ls, find, rg/grep), run scripts, and inspect the repo. Prefer bash for directories/listing/search; use read for known file paths. Do not invent other tools.",
   parameters: {
     type: "object",
     properties: {
       command: {
         type: "string",
-        description: "Bash command to execute",
+        description:
+          "Bash command string, e.g. `ls src`, `find src -name '*.ts'`, `rg -n Tool src`",
       },
       timeout_ms: {
         type: "number",
@@ -80,11 +96,22 @@ export const bashTool: Tool = {
     required: ["command"],
   },
   async execute(args) {
-    const command = String(args.command ?? "");
+    const command = String(args.command ?? "").trim();
+    if (!command) throw new Error("command is required");
+
     const timeoutMs =
       typeof args.timeout_ms === "number" && args.timeout_ms > 0
         ? args.timeout_ms
         : 30_000;
-    return runBash(command, timeoutMs);
+
+    const { output, code, timedOut } = await runBash(command, timeoutMs);
+    const text =
+      output +
+      (code === 0 || code === null ? "" : `\n[exit code: ${code}]`);
+
+    if (timedOut || (code !== 0 && code !== null)) {
+      throw new Error(text || `bash failed with exit code ${code}`);
+    }
+    return text || "(no output)";
   },
 };

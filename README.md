@@ -1,5 +1,5 @@
-# 100x
-
+#Ai Harness
+<video controls src="ai harness demo.mp4" style="max-width: 100%;"></video> 
 This repository contains a small TypeScript project that demonstrates how to build a simple **todo** web application using the **Groq** provider. The todo application was built with the help of Groq. The application is driven by a small agent that can read, write, and execute shell commands. It uses the Groq SDK to generate code, comments, or instructions on how to improve the application. 
 
 ## Table of Contents
@@ -27,10 +27,6 @@ The todo app itself is a classic single‑page application using plain HTML, CSS
 - **Zero‑config**: Uses `tsx` to run TypeScript without compiling.
 
 ## Getting Started
-
-## Demo
-
-<video controls src="ai harness demo.mp4" style="max-width: 100%;"></video>
 
 ```bash
 # Install dependencies
